@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+  <div class="container">hello your server url is:http://<%=ip%>:<%=port%>
+    <p>your clientIp：<%= clientIp %></p>
+  </div>
+  <script>
+    var serverUrl = "http://<%=ip%>:<%=port%>";
+    console.log(serverUrl);
+    const eventSource = new EventSource('/clipboard/stream');
+    eventSource.onmessage = (event) => {
+      console.log(event.data);
+    };
+  </script>
+</body>
+</html>

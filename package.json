@@ -1,0 +1,33 @@
+{
+  "name": "shareclip",
+  "version": "1.0.0",
+  "description": "a cross platform clipboard manager in intranet",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddd702/shareclip.git"
+  },
+  "type": "module",
+  "bin": {
+    "shareclip": "index.mjs"
+  },
+  "keywords": [
+    "clipborad",
+    "cross-platform"
+  ],
+  "author": "ddd",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ddd702/shareclip/issues"
+  },
+  "homepage": "https://github.com/ddd702/shareclip#readme",
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "ejs": "^3.1.10",
+    "fs-extra": "^11.2.0",
+    "ip": "^2.0.1"
+  }
+}
