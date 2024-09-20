@@ -23,6 +23,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(prefersDarkScheme);
   const [settingOpen, setSettingOpen] = useState(false);
   const [clients, setClients] = useState([]);
+  const [interDelay, setInterDelay] = useState(5000);
   const [hostClip, setHostClip] = useState('');
   const [serverInfo, setServerInfo] = useState({ myIpAddr:window.host, port:window.port, clientIp:'' });
   const toggleDarkMode = () => {
@@ -39,6 +40,10 @@ function App() {
       setClients(res.data.data);
     })
   }
+  const startLoopFetch = () => {
+    loopFetchHostClip();
+    inter = setInterval(loopFetchHostClip, interDelay);
+  }
   useEffect(()=>{
     document.body.classList.toggle('dark', isDarkMode);
   },[isDarkMode])
@@ -51,8 +56,18 @@ function App() {
       setServerInfo(res.data.data);
     });
     clearInterval(inter);
-    loopFetchHostClip();
-    inter = setInterval(()=>{loopFetchHostClip()}, 5000);
+    startLoopFetch();
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === 'visible') {
+        console.log('page show');
+        startLoopFetch();
+      } else {
+        console.log('page hidden');
+        clearInterval(inter);
+      }
+    });
+    
+    
     return ()=>{
       clearInterval(inter);
     }
