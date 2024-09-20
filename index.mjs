@@ -4,30 +4,55 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import querystring from 'node:querystring';
 import {fileURLToPath} from 'node:url';
-import clipboard from 'clipboardy';
-import ejs from 'ejs';
+import { PassThrough } from 'node:stream';
 import { argv } from 'node:process';
+import clipboard from 'clipboardy';
+import { PeerServer } from 'peer';
 import fs from 'fs-extra';
 import ip from 'ip';
-import { PassThrough } from 'node:stream';
+import dayjs from 'dayjs';
+import { isFileSync, getFileMime, render404 } from './tools.mjs';
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const myIpAddr = ip.address();
 const port = argv[2]||7080;
 const storagePath = path.join(__dirname, 'storage','index.json');// save client write clipboard to storage.json
-fs.writeFile(storagePath, JSON.stringify([]));// 默认清空或创建storage/index.json
+const clients = [];// save client info
+//fs.writeFile(storagePath, JSON.stringify([]));// 默认清空或创建storage/index.json
 
-createServer((req, res) => {
+fs.writeFileSync(path.join(__dirname, './frontend/dist/s.js'), `window.port="${port}";window.host="${myIpAddr}";`, 'utf8');
+fs.writeFileSync(path.join(__dirname, './frontend/public/s.js'), `window.port="${port}";window.host="${myIpAddr}";`, 'utf8');
+
+createServer(async (req, res) => {
+  console.log(`serving ${req.url}`); // log request path
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const reqPath = req.url.split('?')[0];
   const stream = new PassThrough(); // Create a new stream, for send message to client
-  res.setHeader('Content-Type', 'text/html');
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const readClip = clipboard.readSync();
-  if (req.url === '/') {
-    const indexPath = path.join(__dirname, 'index.html');
-    let html = ejs.render(fs.readFileSync(indexPath).toString(), {ip: myIpAddr, port, clientIp});
-    res.end(html);
+  if (reqPath === '/') {
+    const indexPath = path.join(__dirname, './frontend/dist/index.html');
+    res.end(fs.readFileSync(indexPath));
   }
-  else if (req.url === '/clipboard') {
+  else if (reqPath === '/info'&&req.method === 'POST') {
+    if(!clients.find((client) => client.ip === clientIp)) {
+      console.log('client push');
+      clients.push({
+        ip: clientIp,
+        updateTime: dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss'),
+        createTime: dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss'),
+      });
+    }
+    res.setHeader('Content-Type', 'application/json');
+    res.write(JSON.stringify({data:{
+      clientIp,
+      myIpAddr,
+      port,
+    }}));
+    res.end();
+  }
+  else if (reqPath === '/clipboard') {
     res.setHeader('Content-Type', 'text/plain');
     if (readClip) {
       res.end(readClip);
@@ -35,7 +60,12 @@ createServer((req, res) => {
       res.end('Clipboard is empty');
     }
   }
-  else if (req.url === '/clipboard/stream') {
+  else if (reqPath === '/clients'&&req.method === 'POST') {
+    res.setHeader('Content-Type', 'application/json');
+    res.write(JSON.stringify({data: clients}));
+    res.end();
+  }
+  else if (reqPath === '/clipboard/stream') {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -48,7 +78,7 @@ createServer((req, res) => {
       res.end();
     });
   }
-  else if (req.url === '/clipboard/write'&&req.method === 'POST') {
+  else if (reqPath === '/clipboard/write'&&req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
@@ -70,14 +100,41 @@ createServer((req, res) => {
     })
    
   }
-  else {
-    res.statusCode = 404;
-    const htmlPath = path.join(__dirname, '404.html');
-    res.end(fs.readFileSync(htmlPath));
+  else if (reqPath === '/clipboard/read'&&req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      const postData = querystring.parse(body);
+      const storageContent = (()=>{
+        try {
+          const content = fs.readFileSync(storagePath, 'utf8').toString();
+          return content;
+        }catch (e) {
+          return [];
+        }
+      })();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({data:storageContent}));
+    })
+   
   }
-
-  
+  else if (/^\/dist\/*/.test(reqPath)) {
+    const filePath = path.join(path.join(__dirname, `./frontend/${reqPath}`));
+    if(!isFileSync(filePath)){
+      render404(res);
+      return
+    }else{
+      res.setHeader('Content-Type', getFileMime(filePath));
+      fs.createReadStream(filePath).pipe(res);
+    }
+  }
+  else {
+    render404(res);
+  }
 }).listen(port, '0.0.0.0');
-console.log(`Server running at http://0.0.0.0:${port}/ \nor http://${myIpAddr}:${port}/`);
+const peeServer = PeerServer({path: '/peer', port: port+1});
+console.log(`Server running at http://0.0.0.0:${port}/ \nor http://${myIpAddr}:${port}/\npeerSever running at http://${myIpAddr}:${port+1}/peer`);
 
 
