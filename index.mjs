@@ -103,18 +103,6 @@ createServer(async (req, res) => {
    
     // res.end();
   }
-  else if (reqPath === '/clipboard/stream') {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    stream.pipe(res); // Pipe the stream to the response
-    stream.on('close', () => {
-      console.log('client closed');
-      stream.write(`data: end\n\n`);
-      id = 0;
-      res.end();
-    });
-  }
   else if (reqPath === '/clipboard/write'&&req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => {
@@ -172,7 +160,7 @@ createServer(async (req, res) => {
     render404(res);
   }
 }).listen(port, '0.0.0.0');
-const peeServer = PeerServer({path:peerPath, port: peerPort, key:peerKey, allow_discovery: true});
-console.log(`Server running at http://0.0.0.0:${port}/ \nor http://${myIpAddr}:${port}/\npeerSever running at http://${myIpAddr}:${port+1}/peer`);
+PeerServer({path:peerPath, port: peerPort, key:peerKey, allow_discovery: true});
+console.log(`Server running at  http://${myIpAddr}:${port}/\npeerSever running at http://${myIpAddr}:${port+1}/peer`);
 
 

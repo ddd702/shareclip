@@ -1,22 +1,28 @@
 import { useState,useEffect } from 'react'
-import { Button,ConfigProvider,message, Drawer, Collapse } from 'antd';
+import { Button,ConfigProvider,message, Drawer, Card } from 'antd';
 import { SettingOutlined, CopyOutlined } from '@ant-design/icons';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import axios from "axios";
 import { randStr } from './utils';
 import Peer from 'peerjs';
+import Client from './components/client';
 
 import './App.css'
+import dayjs from 'dayjs';
+
 
 const baseUrl = `http://${window.host}:${window.port}`
 
-let inter = null;
-const peerId = randStr(8);
+let inter = null
+const peerId = randStr(8)
 let peer = new Peer(peerId,{
   key:'p',
   host: window.host,
   port: window.peerPort,
   path: window.peerPath,
+})
+peer.on('open',function(id){
+  console.warn('my peerId',id)
 })
 function App() {
   const prefersDarkScheme = window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');
@@ -44,6 +50,12 @@ function App() {
     loopFetchHostClip();
     inter = setInterval(loopFetchHostClip, interDelay);
   }
+  const sendToClient = (id, msg='hello') => {//设备间联动
+    const conn = peer.connect(id);
+    conn.on('open',()=>{
+      conn.send({msg,ip:serverInfo.clientIp,type:"html",id:`${peerId}_${Date.now()}`,time:dayjs().format('HH:mm:ss'),peerId});
+    })
+  }
   useEffect(()=>{
     document.body.classList.toggle('dark', isDarkMode);
   },[isDarkMode])
@@ -66,39 +78,57 @@ function App() {
         clearInterval(inter);
       }
     });
-    
-    
+    peer.on('connection',(conn)=>{
+      conn.on('data', (data) => {
+        // 收到数据
+        message.info(`Received data from ${data.ip}`)
+        if(data.type==='html'){
+          const targetEl = document.getElementById(`client-message`);
+          const newEl = document.createElement('div');
+          const timeEl = document.createElement('div');
+          newEl.innerHTML = data.msg;
+          newEl.classList.add('message-inner');
+          timeEl.innerHTML = `<div class="time"><span>${data.ip} sended at ${data.time}</span></div>`;
+          targetEl.prepend(newEl);
+          targetEl.prepend(timeEl);
+        }
+      });
+    })
     return ()=>{
       clearInterval(inter);
     }
   },[])
+ 
   return (
     <ConfigProvider>
       <main className="app">
-        <div className="device-list">
-          <div className="device-list-item">
-            <div className="device-list-item-header">
+        <div className="client-box">
+          <section className="clinet-box-inner">
+          
+            {clients.map((client)=>{
+                return <Client sendToClient={sendToClient} client={{...client,isMyself:serverInfo.clientIp ===client.ip}} key={client.ip}/>
+              })
+            }
+          </section>
+        </div>
+        <div className="message-box">
+          <div className="client-list-item">
+            <div className="client-list-item-header">
               <b className="title">Host ClipBord Text</b>
               <CopyToClipboard text={hostClip} onCopy={()=>message.success('Copied to clipboard!')}>
-                <span title="click to copy" className="cursor-pointer" style={{paddingLeft:'10px'}}><CopyOutlined /></span>
+                <span title="click to copy" className="cursor-pointer"><CopyOutlined /></span>
               </CopyToClipboard>
             </div>
-            <div className="device-list-item-content">
-              <pre>{hostClip}</pre>
+            <div className="client-list-item-body">
+              <div className="client-list-item-content">
+                <pre>{hostClip}</pre>
+              </div>
             </div>
           </div>
-          {clients.map((client)=>{
-              return (
-                <div className="device-list-item" key={client.ip}>
-                  <div className="device-list-item-header">
-                    <b className="title">{client.ip}</b>
-                    <span>{client.status}</span>
-                    <span>{(serverInfo.clientIp ===client.ip?'myself':'')}</span>
-                  </div>
-                </div>
-              )
-            })
-          }
+          <div className="client-list-item-header">
+            <span className="title">Message from other client</span>
+          </div>
+          <div className="client-list-item-message" id="client-message"></div>
         </div>
         <div className="setting-btn" onClick={onDrawerToggle}>
           <SettingOutlined />

@@ -27,7 +27,7 @@ body {
   display: flex;
   min-width: 320px;
   color: #213547;
-  background-color: #ffffff;
+  background-color: #efefef;
   box-sizing: border-box;
   min-height: 100vh;
 }
