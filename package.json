@@ -1,5 +1,5 @@
 {
-  "name": "shareclip",
+  "name": "@ddd702/shareclip",
   "version": "1.0.0",
   "description": "a cross platform clipboard manager in intranet",
   "main": "index.mjs",
