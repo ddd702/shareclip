@@ -5,6 +5,7 @@ body{
   --btn-bg: #eee;
   --header-bg: #ddd;
   --dialog-bg: #b9b7fb;
+  --dialog-bg-2: #97ce74;
   --tip-color: #222;
   --ck-scroll-bar-width:6px;
   --ck-scroll-bar-color:#ddd;
@@ -32,8 +33,9 @@ body{
 }
 .dark{
   --btn-bg:#333;
-  --header-bg: #444;
+  --header-bg: #5b34a8;
   --dialog-bg: #6a6b6e;
+  --dialog-bg-2: #6d9354;
   --tip-color: #ddd;
   --ck-scroll-bar-color:rgb(91, 81, 73);
   --ck-scroll-bar-body-bg:rgb(32, 29, 44);
@@ -89,6 +91,14 @@ body{
 .dark .title{
   color: #999;
 }
+.client-message-send{
+  text-align: right;
+}
+.client-message-send .time{
+  justify-content: flex-end;
+}
+
+
 .client-list-item-message img,.paste-area img{
   max-width: 200px;
 }
@@ -100,8 +110,17 @@ body{
 }
 .message-inner{
   display: inline-block;
+  text-align:left;
   border-radius: 5px;
   min-width: 70px;
+}
+.client-message-send .message-inner{
+  background-color: var(--dialog-bg-2);
+}
+.client-message-send .message-inner::after{
+  right: 10px;
+  left: auto;
+  border-bottom: 10px solid var(--dialog-bg-2);
 }
 .client-list-item-body::after,.message-inner::after{
   position: absolute;
@@ -119,7 +138,6 @@ body{
 .client-list-item-content{
   max-height: 30vh;
   max-width: 100vw;
-  border: 1px solid #ccc;
   padding: 10px;
   box-sizing: border-box;
   overflow: auto;
@@ -142,6 +160,7 @@ body{
 .client-list-item-header {
   background-color: var(--header-bg);
   display: flex;
+  border-radius: 5px;
   align-items: center;
   padding: 10px;
   margin-bottom: 10px;

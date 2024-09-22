@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import querystring from 'node:querystring';
 import {fileURLToPath} from 'node:url';
-import { PassThrough } from 'node:stream';
+// import { PassThrough } from 'node:stream';
 import { argv } from 'node:process';
 import clipboard from 'clipboardy';
 import { PeerServer } from 'peer';
@@ -20,23 +20,38 @@ const myIpAddr = ip.address();
 const port = argv[2]||7080;
 const peerPath = '/peer';
 const peerKey = 'p';
-const peerPort = port+1;
+const peerPort = Number(port)+1;
 const storagePath = path.join(__dirname, 'storage','index.json');// save client write clipboard to storage.json
 const clients = [];// save client info
 //fs.writeFile(storagePath, JSON.stringify([]));// 默认清空或创建storage/index.json
+const getVersion = ()=>{
+  const packageJsonPath = path.join(__dirname, 'package.json');
+  try{
+    const jsonStr = fs.readFileSync(packageJsonPath, 'utf8').toString();
+    return JSON.parse(jsonStr).version;
+  }catch(err){
+    return null;
+  }
+}
 
-fs.writeFileSync(path.join(__dirname, './frontend/dist/s.js'), `window.port="${port}";window.host="${myIpAddr}";window.peerPath="${peerPath}";window.peerPort="${peerPort}"`, 'utf8');
-fs.writeFileSync(path.join(__dirname, './frontend/public/s.js'), `window.port="${port}";window.host="${myIpAddr}";window.peerPath="${peerPath}";window.peerPort="${peerPort}"`, 'utf8');
-
+fs.writeFileSync(path.join(__dirname, './frontend/dist/s.js'), `window.port="${port}";window.appVersion="${getVersion()}";window.host="${myIpAddr}";window.peerPath="${peerPath}";window.peerPort="${peerPort}"`, 'utf8');
+fs.writeFileSync(path.join(__dirname, './frontend/public/s.js'), `window.port="${port}";window.appVersion="${getVersion()}";window.host="${myIpAddr}";window.peerPath="${peerPath}";window.peerPort="${peerPort}"`, 'utf8');
 createServer(async (req, res) => {
   // console.log(`serving ${req.url}`); // log request path
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST'); // 允许 POST 请求
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); 
   const reqPath = req.url.split('?')[0];
-  const stream = new PassThrough(); // Create a new stream, for send message to client
+  // const stream = new PassThrough(); // Create a new stream, for send message to client
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const readClip = clipboard.readSync();
+  const readClip = (()=>{
+    try{
+      return clipboard.readSync()
+    }catch(e){
+      return ''
+    }
+    
+  })();
   if (reqPath === '/') {
     const indexPath = path.join(__dirname, './frontend/dist/index.html');
     res.end(fs.readFileSync(indexPath));

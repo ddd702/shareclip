@@ -51,10 +51,35 @@ function App() {
     inter = setInterval(loopFetchHostClip, interDelay);
   }
   const sendToClient = (id, msg='hello') => {//设备间联动
+    if(!msg){
+      message.warning('Please input message');
+      return
+    }
     const conn = peer.connect(id);
     conn.on('open',()=>{
-      conn.send({msg,ip:serverInfo.clientIp,type:"html",id:`${peerId}_${Date.now()}`,time:dayjs().format('HH:mm:ss'),peerId});
+      const sendData = {msg,ip:serverInfo.clientIp,type:"html",id:`${peerId}_${Date.now()}`,time:dayjs().format('HH:mm:ss'),peerId};
+      renderMessage(sendData,1);
+      conn.send(sendData);
     })
+  }
+  const renderMessage = (data,type = 0) => {// type,0:接收的信息，1：我发的
+    if(data.type==='html'){
+      const targetEl = document.getElementById(`client-message`);
+      const newEl = document.createElement('div');
+      const msgEl = document.createElement('div');
+      const timeEl = document.createElement('div');
+      if(type===1){
+        newEl.classList.add('client-message-send');
+      }else{
+        newEl.classList.add('client-message-recieve');
+      }
+      msgEl.innerHTML = data.msg;
+      msgEl.classList.add('message-inner');
+      timeEl.innerHTML = `<div class="time"><span>${type===1?'I ':data.ip} sent at ${data.time}</span></div>`;
+      newEl.appendChild(timeEl);
+      newEl.appendChild(msgEl);
+      targetEl.appendChild(newEl);
+    }
   }
   useEffect(()=>{
     document.body.classList.toggle('dark', isDarkMode);
@@ -82,16 +107,7 @@ function App() {
       conn.on('data', (data) => {
         // 收到数据
         message.info(`Received data from ${data.ip}`)
-        if(data.type==='html'){
-          const targetEl = document.getElementById(`client-message`);
-          const newEl = document.createElement('div');
-          const timeEl = document.createElement('div');
-          newEl.innerHTML = data.msg;
-          newEl.classList.add('message-inner');
-          timeEl.innerHTML = `<div class="time"><span>${data.ip} sended at ${data.time}</span></div>`;
-          targetEl.prepend(newEl);
-          targetEl.prepend(timeEl);
-        }
+        renderMessage(data);
       });
     })
     return ()=>{
@@ -143,6 +159,10 @@ function App() {
               <div>
                 <b className="title">Host URL</b>
                 <p>http://{serverInfo.myIpAddr}:{serverInfo.port}</p>
+              </div>
+              <div>
+                <b className="title">Version</b>
+                <p>{window.appVersion}</p>
               </div>
             </section>
             <Button type="primary" size="small" block shape="round" onClick={toggleDarkMode}>
