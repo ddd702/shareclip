@@ -12,7 +12,8 @@ import fs from 'fs-extra';
 import ip from 'ip';
 import dayjs from 'dayjs';
 import axios from 'axios';
-import { isFileSync, getFileMime, render404 } from './tools.mjs';
+import multer from 'multer';
+import { isFileSync, getFileMime, render404, getFileExt, randStr } from './tools.mjs';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,6 +22,7 @@ const port = argv[2]||7080;
 const peerPath = '/peer';
 const peerKey = 'p';
 const peerPort = Number(port)+1;
+const uploadPath = path.join(__dirname, './frontend/uploads');
 const storagePath = path.join(__dirname, 'storage','index.json');// save client write clipboard to storage.json
 const clients = [];// save client info
 //fs.writeFile(storagePath, JSON.stringify([]));// 默认清空或创建storage/index.json
@@ -36,11 +38,17 @@ const getVersion = ()=>{
 
 fs.writeFileSync(path.join(__dirname, './frontend/dist/s.js'), `window.port="${port}";window.appVersion="${getVersion()}";window.host="${myIpAddr}";window.peerPath="${peerPath}";window.peerPort="${peerPort}"`, 'utf8');
 fs.writeFileSync(path.join(__dirname, './frontend/public/s.js'), `window.port="${port}";window.appVersion="${getVersion()}";window.host="${myIpAddr}";window.peerPath="${peerPath}";window.peerPort="${peerPort}"`, 'utf8');
+fs.emptyDirSync(uploadPath);// make sure uploadPath is exit
+fs.emptyDir(uploadPath, err => {
+  if (err) return console.error(err)
+  console.log('clear uploads success!')
+})
 createServer(async (req, res) => {
+  
   // console.log(`serving ${req.url}`); // log request path
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST'); // 允许 POST 请求
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); 
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, DELETE, PUT'); // 允许 POST 请求
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-Requested-With'); 
   const reqPath = req.url.split('?')[0];
   // const stream = new PassThrough(); // Create a new stream, for send message to client
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -102,7 +110,8 @@ createServer(async (req, res) => {
   }
   else if (reqPath === '/clients'&&(req.method === 'POST'||req.method === 'OPTIONS')) {
     if(req.method === 'POST'){
-      axios.get(`http://localhost:${peerPort}${peerPath}/${peerKey}/peers`).then(({data = []})=>{
+      res.setHeader('Content-Type', 'application/json');
+      axios.get(`http://${myIpAddr}:${peerPort}${peerPath}/${peerKey}/peers`).then(({data = []})=>{
         clients.forEach((client)=>{
           if(data.includes(client.peerId)){
             client.status = 'online'
@@ -110,13 +119,44 @@ createServer(async (req, res) => {
             client.status = 'offline'
           }
         })
-        res.setHeader('Content-Type', 'application/json');
+        // res.write(JSON.stringify({data: clients}));
+        // res.end();
+      }).finally(()=>{
         res.write(JSON.stringify({data: clients}));
         res.end();
       })
     }
    
     // res.end();
+  }
+  else if (reqPath === '/upload'&&(req.method === 'POST'||req.method === 'OPTIONS')) {
+    if(req.method === 'POST'){
+      let uploadFileName
+      const storage = multer.diskStorage({
+          destination: (req, file, cb) => {
+              cb(null, uploadPath); // 上传文件的保存路径
+          },
+          filename: (req, file, cb) => {
+              uploadFileName = `${clientIp}_${randStr(5)}`+getFileExt(file.originalname);
+              cb(null, uploadFileName); // 使用原始文件名
+          }
+      });
+    
+      const upload = multer({ storage: storage });
+      res.setHeader('Content-Type', 'application/json');
+      upload.single('file')(req, res, (err) => {
+        if (err) {
+            console.error(err);
+            res.statusCode = 500;
+            res.end(JSON.stringify({message:'Error uploading file.'}));
+        } else {
+            res.end(JSON.stringify({message:'File uploaded successfully.',data:`http://${myIpAddr}:${port}/uploads/${uploadFileName}`}));
+        }
+      });
+      // res.end();
+    }else{
+      res.end();
+    }
   }
   else if (reqPath === '/clipboard/write'&&req.method === 'POST') {
     let body = '';
@@ -125,7 +165,6 @@ createServer(async (req, res) => {
     });
     req.on('end', () => {
       const postData = querystring.parse(body);
-      console.log(postData);
       const storageContent = (()=>{
         try {
           return JSON.parse(fs.readFileSync(storagePath, 'utf8'))
@@ -161,7 +200,7 @@ createServer(async (req, res) => {
     })
    
   }
-  else if (/^\/dist\/*/.test(reqPath)) {
+  else if (/^\/dist\/*/.test(reqPath)||/^\/uploads\/*/.test(reqPath)) {
     const filePath = path.join(path.join(__dirname, `./frontend/${reqPath}`));
     if(!isFileSync(filePath)){
       render404(res);

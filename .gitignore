@@ -12,3 +12,5 @@ yarn.lock
 .env.production.local
 next.config.js
 out
+test
+frontend/uploads/*

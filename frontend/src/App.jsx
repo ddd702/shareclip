@@ -14,7 +14,7 @@ import dayjs from 'dayjs';
 const baseUrl = `http://${window.host}:${window.port}`
 
 let inter = null
-const peerId = randStr(8)
+const peerId = randStr(8).toLocaleLowerCase();
 let peer = new Peer(peerId,{
   key:'p',
   host: window.host,
@@ -56,11 +56,16 @@ function App() {
       return
     }
     const conn = peer.connect(id);
+    console.warn('Connect',id,conn)
     conn.on('open',()=>{
+      console.warn('Connect open')
       const sendData = {msg,ip:serverInfo.clientIp,type:"html",id:`${peerId}_${Date.now()}`,time:dayjs().format('HH:mm:ss'),peerId};
       renderMessage(sendData,1);
       conn.send(sendData);
     })
+    conn.on('error', (err) => {
+      console.error('Error connecting peer:', err);
+    });
   }
   const renderMessage = (data,type = 0) => {// type,0:接收的信息，1：我发的
     if(data.type==='html'){

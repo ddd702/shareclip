@@ -15,13 +15,15 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #7277d5;
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  opacity: 0.6;
 }
-
+.dark a {
+  color: #a0beee;
+}
 body {
   margin: 0;
   display: flex;
@@ -56,9 +58,6 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-a:hover {
-  color: #747bff;
-}
 button {
   background-color: #f9f9f9;
 }

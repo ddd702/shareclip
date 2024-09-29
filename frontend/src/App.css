@@ -4,13 +4,14 @@
 body{
   --btn-bg: #eee;
   --header-bg: #ddd;
-  --dialog-bg: #b9b7fb;
+  --dialog-bg: #8addcc;
   --dialog-bg-2: #97ce74;
   --tip-color: #222;
   --ck-scroll-bar-width:6px;
   --ck-scroll-bar-color:#ddd;
   
 }
+
 .ck-scrollbar{
   div,body {
     &::-webkit-scrollbar{
@@ -34,7 +35,7 @@ body{
 .dark{
   --btn-bg:#333;
   --header-bg: #5b34a8;
-  --dialog-bg: #6a6b6e;
+  --dialog-bg: #111;
   --dialog-bg-2: #6d9354;
   --tip-color: #ddd;
   --ck-scroll-bar-color:rgb(91, 81, 73);
