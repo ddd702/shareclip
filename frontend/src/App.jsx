@@ -3,16 +3,19 @@ import { Button,ConfigProvider,message, Drawer, Card } from 'antd';
 import { SettingOutlined, CopyOutlined } from '@ant-design/icons';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import axios from "axios";
+import Viewer from 'viewerjs';
 import { randStr } from './utils';
 import Peer from 'peerjs';
 import Client from './components/client';
 
+import 'viewerjs/dist/viewer.css' //预览图片样式
 import './App.css'
+
 import dayjs from 'dayjs';
 
 
 const baseUrl = `http://${window.host}:${window.port}`
-
+let picViewer  = null
 let inter = null
 const peerId = randStr(8).toLocaleLowerCase();
 let peer = new Peer(peerId,{
@@ -84,6 +87,10 @@ function App() {
       newEl.appendChild(timeEl);
       newEl.appendChild(msgEl);
       targetEl.appendChild(newEl);
+      picViewer && picViewer.destroy();
+      picViewer = new Viewer(document.querySelector('#client-message'), {
+        inline: false,
+      });
     }
   }
   useEffect(()=>{
@@ -168,6 +175,10 @@ function App() {
               <div>
                 <b className="title">Version</b>
                 <p>{window.appVersion}</p>
+              </div>
+              <div>
+                <b className="title">HomePage</b>
+                <p><a target='_blank' href='https://github.com/ddd702/shareclip'>https://github.com/ddd702/shareclip</a></p>
               </div>
             </section>
             <Button type="primary" size="small" block shape="round" onClick={toggleDarkMode}>

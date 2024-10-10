@@ -114,6 +114,8 @@ body{
   text-align:left;
   border-radius: 5px;
   min-width: 70px;
+  max-width: 500px;
+  overflow-y: auto;
 }
 .client-message-send .message-inner{
   background-color: var(--dialog-bg-2);

@@ -124,6 +124,10 @@ createServer(async (req, res) => {
       }).finally(()=>{
         res.write(JSON.stringify({data: clients}));
         res.end();
+      }).catch((err)=>{
+        console.log(err);
+        // res.write(JSON.stringify({data: clients}));
+        res.end();
       })
     }
    

@@ -23,6 +23,9 @@ function Client({client,sendToClient}) {
         inputRef.current.appendChild($div)
       }
     }
+    const clearData = ()=>{
+      inputRef.current.innerHTML = ''
+    }
     return (
         <div className="client-list-item">
           <div className="client-list-item-header">
@@ -36,7 +39,8 @@ function Client({client,sendToClient}) {
           {isMyself||status==="offline"?'':<div className="client-list-item-body">
               <p className="tip">You can send text and picture</p>
               <section ref={inputRef} className="paste-area" contentEditable></section>
-              <Button type="primary" onClick={submitData}>Send to this user</Button>
+              <Button type="primary" onClick={submitData}>Send</Button>
+              <Button style={{marginLeft:'10px'}} danger type="primary" onClick={clearData}>Clear</Button>
               <Upload action={uploadApi} onChange={handleUploadChange}>
                 <Button  icon={<UploadOutlined />} style={{marginLeft:'10px'}} type="dashed">Upload file</Button>
               </Upload>
