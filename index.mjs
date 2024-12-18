@@ -71,7 +71,7 @@ createServer(async (req, res) => {
     });
     req.on('end', () => {
       const postData = querystring.parse(body);
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json;charset=utf-8');
       if(clients.length > 0){
         clients.forEach(client =>{
           if(client.ip === clientIp){
@@ -83,6 +83,7 @@ createServer(async (req, res) => {
       if(!clients.find((client) => client.ip === clientIp)) {
         clients.push({
           ip: clientIp,
+          ua: postData.ua,
           peerId: postData.peerId,
           updateTime: dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss'),
           createTime: dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss'),
@@ -110,7 +111,7 @@ createServer(async (req, res) => {
   }
   else if (reqPath === '/clients'&&(req.method === 'POST'||req.method === 'OPTIONS')) {
     if(req.method === 'POST'){
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json;charset=utf-8');
       axios.get(`http://${myIpAddr}:${peerPort}${peerPath}/${peerKey}/peers`).then(({data = []})=>{
         clients.forEach((client)=>{
           if(data.includes(client.peerId)){
@@ -125,7 +126,7 @@ createServer(async (req, res) => {
         res.write(JSON.stringify({data: clients}));
         res.end();
       }).catch((err)=>{
-        console.log(err);
+        console.log('catch some err');
         // res.write(JSON.stringify({data: clients}));
         res.end();
       })
@@ -137,24 +138,29 @@ createServer(async (req, res) => {
     if(req.method === 'POST'){
       let uploadFileName
       const storage = multer.diskStorage({
-          destination: (req, file, cb) => {
-              cb(null, uploadPath); // 上传文件的保存路径
+          destination: async (req, file, cb) => {
+            const dest=path.join(uploadPath,`${clientIp}`)
+            await fs.ensureDir(dest)
+            cb(null, dest); // 上传文件的保存路径
           },
           filename: (req, file, cb) => {
-              uploadFileName = `${clientIp}_${randStr(5)}`+getFileExt(file.originalname);
+              file.originalname = Buffer.from(file.originalname, "latin1").toString(
+                "utf8"
+              );//中文乱码问题
+              uploadFileName = `${file.originalname}`;
               cb(null, uploadFileName); // 使用原始文件名
           }
       });
     
       const upload = multer({ storage: storage });
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json;charset=utf-8');
       upload.single('file')(req, res, (err) => {
         if (err) {
             console.error(err);
             res.statusCode = 500;
             res.end(JSON.stringify({message:'Error uploading file.'}));
         } else {
-            res.end(JSON.stringify({message:'File uploaded successfully.',data:`http://${myIpAddr}:${port}/uploads/${uploadFileName}`}));
+            res.end(JSON.stringify({message:'File uploaded successfully.',size:req.body.size,name:uploadFileName,data:`http://${myIpAddr}:${port}/uploads/${clientIp}/${uploadFileName}`}));
         }
       });
       // res.end();
@@ -178,7 +184,7 @@ createServer(async (req, res) => {
       })();
       storageContent.push({ip:clientIp,clip:postData.clip});
       fs.writeFileSync(storagePath, JSON.stringify(storageContent));
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json;charset=utf-8');
       res.write(JSON.stringify({data:true}));
       res.end();
     })

@@ -1,17 +1,18 @@
 import { useState,useEffect } from 'react'
-import { Button,ConfigProvider,message, Drawer, Card } from 'antd';
+import { Button,ConfigProvider,message, Drawer } from 'antd';
 import { SettingOutlined, CopyOutlined } from '@ant-design/icons';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
+import dayjs from 'dayjs';
 import axios from "axios";
 import Viewer from 'viewerjs';
-import { randStr } from './utils';
+import { randStr } from '@/lib/tools';
 import Peer from 'peerjs';
-import Client from './components/client';
+import Client from '@/components/client';
 
 import 'viewerjs/dist/viewer.css' //预览图片样式
-import './App.css'
+import '@/App.css'
 
-import dayjs from 'dayjs';
+
 
 
 const baseUrl = `http://${window.host}:${window.port}`
@@ -32,6 +33,11 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(prefersDarkScheme);
   const [settingOpen, setSettingOpen] = useState(false);
   const [clients, setClients] = useState([]);
+  const [clientsInfo, setClientsInfo] = useState<{
+    [key: string]: {
+      msgCnt: number,
+    }
+  }>({});
   const [interDelay, setInterDelay] = useState(5000);
   const [hostClip, setHostClip] = useState('');
   const [serverInfo, setServerInfo] = useState({ myIpAddr:window.host, port:window.port, clientIp:'' });
@@ -79,6 +85,8 @@ function App() {
       if(type===1){
         newEl.classList.add('client-message-send');
       }else{
+        clientsInfo[data.peerId] = {msgCnt:clientsInfo[data.peerId]?.msgCnt+1||1};
+        setClientsInfo(clientsInfo);
         newEl.classList.add('client-message-recieve');
       }
       msgEl.innerHTML = data.msg;
@@ -106,15 +114,6 @@ function App() {
     });
     clearInterval(inter);
     startLoopFetch();
-    document.addEventListener("visibilitychange", function() {
-      if (document.visibilityState === 'visible') {
-        console.log('page show');
-        startLoopFetch();
-      } else {
-        console.log('page hidden');
-        clearInterval(inter);
-      }
-    });
     peer.on('connection',(conn)=>{
       conn.on('data', (data) => {
         // 收到数据

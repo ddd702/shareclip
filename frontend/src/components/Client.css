@@ -1,12 +1,22 @@
 .paste-area{
   padding: 10px;
   border: 1px solid #999;
-  margin-bottom: 10px;
   overflow: auto;
+  @apply rounded-sm max-h-[50vh];
+}
+.client-item{
+  @apply cursor-pointer w-full overflow-x-hidden transition-all bg-transparent hover:dark:bg-slate-600 hover:bg-slate-200 rounded-sm;
+  
+}
+.client-item.selected{
+  @apply dark:bg-slate-600 bg-slate-200;
+}
+.client-tag{
+  font-size: 12px;
+  @apply ml-2;
 }
 .tip {
   padding:0 0 5px 0; margin:0;
-  color: var(--tip-color);
   font-size: 12px;
 }
 .ant-upload-wrapper .ant-upload-list{

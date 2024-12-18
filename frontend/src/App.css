@@ -1,17 +1,3 @@
-#root{
-  width: 100%;
-}
-body{
-  --btn-bg: #eee;
-  --header-bg: #ddd;
-  --dialog-bg: #8addcc;
-  --dialog-bg-2: #97ce74;
-  --tip-color: #222;
-  --ck-scroll-bar-width:6px;
-  --ck-scroll-bar-color:#ddd;
-  
-}
-
 .ck-scrollbar{
   div,body {
     &::-webkit-scrollbar{
@@ -32,23 +18,8 @@ body{
     }
   }
 }
-.dark{
-  --btn-bg:#333;
-  --header-bg: #5b34a8;
-  --dialog-bg: #111;
-  --dialog-bg-2: #6d9354;
-  --tip-color: #ddd;
-  --ck-scroll-bar-color:rgb(91, 81, 73);
-  --ck-scroll-bar-body-bg:rgb(32, 29, 44);
-}
-.dark .ant-drawer .ant-drawer-content{
-  background-color: var(--btn-bg,#777);
-}
-.dark .ant-drawer{
-  color: #fff;
-}
-.dark .ant-drawer .ant-drawer-close{
-  color:#fff;
+.app-footer{
+  @apply sticky z-10 max-w-[700px] mx-auto rounded-sm flex  bg-[var(--header-bg)] w-full bottom-0 left-0 justify-center items-center lg:p-3 p-1;
 }
 .time{
   font-size: 12px;
@@ -98,34 +69,13 @@ body{
 .client-message-send .time{
   justify-content: flex-end;
 }
-
-
-.client-list-item-message img,.paste-area img{
-  max-width: 200px;
-}
 .client-list-item-body,.message-inner{
   padding: 10px;
   margin: 15px 0;
   background-color: var(--dialog-bg);
   position: relative;
 }
-.message-inner{
-  display: inline-block;
-  text-align:left;
-  border-radius: 5px;
-  min-width: 70px;
-  max-width: 500px;
-  overflow-y: auto;
-}
-.client-message-send .message-inner{
-  background-color: var(--dialog-bg-2);
-}
-.client-message-send .message-inner::after{
-  right: 10px;
-  left: auto;
-  border-bottom: 10px solid var(--dialog-bg-2);
-}
-.client-list-item-body::after,.message-inner::after{
+.message-inner::after{
   position: absolute;
   top:-10px;
   left: 10px;
@@ -137,6 +87,27 @@ body{
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   
+}
+
+
+.client-list-item-message img,.paste-area img{
+  max-width: 200px;
+}
+.message-inner{
+  display: inline-block;
+  text-align:left;
+  border-radius: 5px;
+  min-width: 70px;
+  max-width: 500px;
+
+}
+.client-message-send .message-inner{
+  background-color: var(--dialog-bg-2);
+}
+.client-message-send .message-inner::after{
+  right: 10px;
+  left: auto;
+  border-bottom: 10px solid var(--dialog-bg-2);
 }
 .client-list-item-content{
   max-height: 30vh;
@@ -167,27 +138,4 @@ body{
   align-items: center;
   padding: 10px;
   margin-bottom: 10px;
-}
-.client-tag{
-  font-size: 12px;
-}
-.setting-btn{
-  position: fixed;
-  bottom: 2vh;
-  right: 2vw;
-  width: 40px;
-  height: 40px;
-  text-align: center;
-  line-height: 40px;
-  background-color: var(--btn-bg,#fff);
-  border-radius: 50%;
-  padding: 10px;
-  box-shadow: 0 3px 5px rgba(0,0,0,0.5);
-  cursor: pointer;
-  z-index: 999;
-  font-size: 25px;
-
-}
-.setting-btn:hover{
-  opacity: 0.8;
 }
