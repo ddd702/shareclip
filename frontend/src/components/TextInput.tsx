@@ -38,7 +38,7 @@ export default function TextInput({
     if(response.data){
       const $div = document.createElement('span')
       $div.innerHTML = `<a title="${response.data}" target="_blank" style="font-size:14px; background:var(--paperclip-bg); padding:5px; margin:5px;border-radius:5px; display:inline-block;" href="${response.data}">
-        <span style="background-size:100% 100%;display:inline-block;background:url(/paperclip.svg) no-repeat 0 0;color:#fff;width:24px;height:24px;"></span>
+        <span style="background-size:100% 100%;display:inline-block;background:url(/dist/paperclip.svg) no-repeat 0 0;color:#fff;width:24px;height:24px;"></span>
         <span style="color:#fff">${response.name}</span>
         <span style="color:#ddd; font-size:12px;">${response.size}</span>
       </a>`

@@ -139,7 +139,7 @@ createServer(async (req, res) => {
       let uploadFileName
       const storage = multer.diskStorage({
           destination: async (req, file, cb) => {
-            const dest=path.join(uploadPath,`${clientIp}`)
+            const dest=path.join(uploadPath)
             await fs.ensureDir(dest)
             cb(null, dest); // 上传文件的保存路径
           },
@@ -160,7 +160,7 @@ createServer(async (req, res) => {
             res.statusCode = 500;
             res.end(JSON.stringify({message:'Error uploading file.'}));
         } else {
-            res.end(JSON.stringify({message:'File uploaded successfully.',size:req.body.size,name:uploadFileName,data:`http://${myIpAddr}:${port}/uploads/${clientIp}/${uploadFileName}`}));
+            res.end(JSON.stringify({message:'File uploaded successfully.',size:req.body.size,name:uploadFileName,data:`http://${myIpAddr}:${port}/uploads/${uploadFileName}`}));
         }
       });
       // res.end();
@@ -211,7 +211,9 @@ createServer(async (req, res) => {
    
   }
   else if (/^\/dist\/*/.test(reqPath)||/^\/uploads\/*/.test(reqPath)) {
-    const filePath = path.join(path.join(__dirname, `./frontend/${reqPath}`));
+    const reqPathV2 = decodeURIComponent(reqPath);
+    const filePath = path.join(path.join(__dirname, `./frontend/${reqPathV2}`));
+    console.log('filePath',reqPathV2);
     if(!isFileSync(filePath)){
       render404(res);
       return
