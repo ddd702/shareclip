@@ -13,7 +13,8 @@ import ip from 'ip';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import multer from 'multer';
-import { isFileSync, getFileMime, render404, getFileExt, randStr } from './tools.mjs';
+import mime from 'mime';
+import { isFileSync, render404 } from './tools.mjs';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -213,13 +214,19 @@ createServer(async (req, res) => {
   else if (/^\/dist\/*/.test(reqPath)||/^\/uploads\/*/.test(reqPath)) {
     const reqPathV2 = decodeURIComponent(reqPath);
     const filePath = path.join(path.join(__dirname, `./frontend/${reqPathV2}`));
-    console.log('filePath',reqPathV2);
     if(!isFileSync(filePath)){
       render404(res);
       return
     }else{
-      res.setHeader('Content-Type', getFileMime(filePath));
-      fs.createReadStream(filePath).pipe(res);
+      const readStream = fs.createReadStream(filePath);
+      if(mime.getType(filePath)){
+        res.setHeader('Content-Type', mime.getType(filePath));
+      }else{
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Disposition', 'attachment');
+      }
+      res.writeHead(200);
+      readStream.pipe(res);
     }
   }
   else {

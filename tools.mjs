@@ -34,22 +34,3 @@ export function render404(res){
   res.end(fs.readFileSync(htmlPath));
 }
 
-export function getFileMime (filePath) {
-    const extname = path.extname(filePath).toLowerCase();
-    const mimeTypes = {
-      '.svg': 'image/svg+xml',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.bmp': 'image/bmp',
-      '.ico': 'image/x-icon',
-      '.webp': 'image/webp',
-      '.json': 'application/json',
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.js': 'application/javascript',
-      // ... 其他 MIME 类型
-    };
-    return mimeTypes[extname] || 'text/plain';
-}

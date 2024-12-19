@@ -7,13 +7,16 @@ import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { Toaster } from "@/components/ui/sonner"
+import { Avatar } from "@/components/ui/avatar"
 import { SidebarProvider, SidebarTrigger,useSidebar } from "@/components/ui/sidebar"
 import AppSidebar  from "@/components/AppSidebar"
 import TextInput from "@/components/TextInput"
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import { randStr } from '@/lib/tools';
 import Client from '@/components/client';
-
+import DisabledTips from '@/components/DisabledTips';
+import ServerMsg from '@/components/ServerMsg';
+import DeviceIcon from '@/components/DeviceIcon';
 
 
 import 'viewerjs/dist/viewer.css' //预览图片样式
@@ -133,7 +136,7 @@ function App() {
     peer.on('connection',(conn)=>{
       conn.on('data', (data) => {
         // 收到数据
-        //toast.info(`Received data from ${data.ip}`)
+        toast.info(`Received data from ${data.ip}`)
         renderMessage(data);
       });
     })
@@ -156,9 +159,9 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <SidebarProvider className="w-full">
-        <AppSidebar serverInfo={serverInfo}>
+        <AppSidebar onSelectedHost={()=>setCurrentClientIp('')}  serverInfo={serverInfo} currentClientIp={currentClientIp}>
           {clients.map((client)=>{
-              return serverInfo.clientIp !==client.ip&&<Client 
+              return <Client 
                 onSelected={(ip)=>setCurrentClientIp(ip)} 
                 sendToClient={sendToClient} 
                 client={{
@@ -174,20 +177,25 @@ function App() {
         <main className="h-[100svh] relative w-full flex-1 flex-col justify-between flex">
           <header className="flex bg-[var(--header-bg)] z-10 sticky top-0 left-0 items-center">
             {isMobile&&<SidebarTrigger />}
-            {currentClient?
-              <div className="flex-1 flex flex-col">
-                <h2 className="text-sm p-3 text-center font-bold">
-                  {currentClient.ip}
-                </h2>
-              </div>
-              :
-              <h1 className="lg:text-xl text-sm p-3 text-center font-bold">
-                ShareClip - A simple clipboard or file sharing tool
-              </h1>
-            }
+            <div className="flex-1 flex flex-col">
+              <h2 className="text-sm flex items-center justify-center p-3 text-center font-bold">
+                {currentClient&&
+                  <Avatar className="mr-2" style={{ backgroundColor: currentClient.status==="online"?"#7e77e2":"gray" }}>
+                    <DeviceIcon ua={currentClient.ua}/>
+                  </Avatar>
+                }
+                {currentClientIp ||' ShareClip - A simple clipboard or file sharing tool'}
+              </h2>
+            </div>
           </header>
           <div className="flex-1 bg-[var(--message-bg)] p-2">
             <div className="client-list-item-message max-w-[600px] mx-auto" id="client-message"></div>
+            <div className="max-w-[900px] mx-auto">
+              {currentClientIp===serverInfo.clientIp&&<DisabledTips>
+                  You can't send messages to yourself
+                </DisabledTips>}
+              {!currentClientIp&&<ServerMsg hostClip={hostClip} serverInfo={serverInfo}/>}
+            </div>
           </div>
           <footer
             className={(currentClient&&currentClient.status==="online"&&currentClient.ip!==serverInfo.clientIp)?"app-footer":"hidden"}>

@@ -3,44 +3,61 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarTrigger,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
   useSidebar
 } from "@/components/ui/sidebar"
+import { Avatar } from "@/components/ui/avatar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { BadgeInfo } from 'lucide-react';
+import { BadgeInfo,PcCase } from 'lucide-react';
 import ToggleTheme from "@/components/ToggleTheme";
 import { toast } from "sonner"
 function InfoComponent({serverInfo}) {
   return (<>
         <div className="text-xs">
-          ver:
+          Ver:
           <p className="text-sm">{window.appVersion}</p>
         </div>
         <div className="text-xs my-3">
-          my ip:
+          My ip:
           <p className="text-sm">{serverInfo.clientIp}</p>
         </div>
         <div className="text-xs">
-          github:
+          Github:
           <p className="text-sm"><a href="https://github.com/ddd702/shareclip" target="_blank">https://github.com/ddd702/shareclip</a></p>
         </div>
       </>
   )
 }
-export default function AppSidebar({serverInfo,children}) {
+export default function AppSidebar({serverInfo,onSelectedHost,currentClientIp,children}) {
   const { open,isMobile } = useSidebar()
+
   return (
     <Sidebar side="left" collapsible="icon">
       <SidebarHeader>
         {!isMobile&&<SidebarTrigger />}
       </SidebarHeader>
       <SidebarContent className="p-1">
+        <SidebarGroupLabel>Server</SidebarGroupLabel>
+        <SidebarMenu>
+          <SidebarMenuItem onClick={onSelectedHost} className={`${!currentClientIp?"selected":""} p-1 client-item flex text-sm cursor-pointer items-center`}>
+            <Avatar className="bg-[var(--dialog-bg)] mr-1">
+              <PcCase />
+            </Avatar>
+            {open&&<span>{serverInfo.myIpAddr}:{serverInfo.port}</span>}
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <SidebarGroupLabel>Clients</SidebarGroupLabel>
         {children}
 
       </SidebarContent>

@@ -2,6 +2,7 @@ import { useRef,useCallback } from "react"
 import { Avatar } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useSidebar } from "@/components/ui/sidebar"
+import DeviceIcon from "./DeviceIcon"
 import "./Client.css"
 
 function Client({client, clientsInfo,onSelected,sendToClient}) {
@@ -14,7 +15,7 @@ function Client({client, clientsInfo,onSelected,sendToClient}) {
       isMobile,
       toggleSidebar,
     } = useSidebar();
-    const { ip,status,isMyself,peerId, selected} = client
+    const { ip,status,isMyself,peerId,ua, selected} = client
     const getAvatarName = ((ip)=>{
       return ip.split('.').at(-1);
     })(ip)
@@ -29,15 +30,15 @@ function Client({client, clientsInfo,onSelected,sendToClient}) {
       inputRef.current.innerHTML = ''
     }
     return (
-      <div onClick={()=>onSelected(ip)} className={selected?"client-item selected":"client-item"}>
+      <div onClick={()=>onSelected(ip)} className={selected?"client-item selected":"client-item cursor-pointer"}>
         <div className="flex items-center p-1">
           <div className="relative">
             {(isMobile||!open)&&!!clientsInfo[ip]?.msgCnt&&<span className="absolute p-1 leading-[1] top-0 right-[0px] w-[10px] h-[10px] rounded-full bg-[#f00] z-10"></span>}
-            <Avatar className="text-[#fff]" style={{ backgroundColor: status==="online"?"#8077d8":"grey" }}>{getAvatarName}</Avatar>
+            <Avatar className="text-[#fff]" style={{ backgroundColor: status==="online"?"#7e77e2":"gray" }}><DeviceIcon ua={ua}/></Avatar>
           </div>
           {open?
             <>
-              <span className="client-tag">{peerId}</span>
+              <span className="client-tag">{ ip }</span>
               <span className="client-tag">{status}</span>
               {isMyself?<span className="client-tag">me</span>:''}
               {(!!clientsInfo[ip]?.msgCnt)&&<Badge className="ml-2">{clientsInfo[ip]?.msgCnt}</Badge>}
