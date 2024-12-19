@@ -14,4 +14,5 @@ After running , open the url on you browser
 
 # Preview
 
-  ![image](https://github.com/user-attachments/assets/f41403c8-4155-4004-9f96-9bccde115d3b)
+ <img width="1439" alt="image" src="https://github.com/user-attachments/assets/6aaaee93-f4c9-4b96-a33d-3700c0dd8054" />
+
