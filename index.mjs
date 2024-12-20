@@ -233,7 +233,8 @@ createServer(async (req, res) => {
     render404(res);
   }
 }).listen(port, '0.0.0.0');
-PeerServer({path:peerPath, port: peerPort, key:peerKey, allow_discovery: true});
+PeerServer({path:peerPath,debug: true,
+  port: peerPort, key:peerKey,proxied:true, allow_discovery: true});
 console.log(`Server running at  http://${myIpAddr}:${port}/\npeerSever running at http://${myIpAddr}:${peerPort}/peer`);
 
 

@@ -31,6 +31,7 @@ function Client({client, clientsInfo,onSelected,sendToClient}) {
     }
     return (
       <div onClick={()=>onSelected(ip)} className={selected?"client-item selected":"client-item cursor-pointer"}>
+        {open&&<span className="text-[#888] px-1 text-xs">{ peerId }</span>}
         <div className="flex items-center p-1">
           <div className="relative">
             {(isMobile||!open)&&!!clientsInfo[ip]?.msgCnt&&<span className="absolute p-1 leading-[1] top-0 right-[0px] w-[10px] h-[10px] rounded-full bg-[#f00] z-10"></span>}

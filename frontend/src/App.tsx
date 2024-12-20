@@ -25,15 +25,29 @@ import '@/App.css'
 const baseUrl = `http://${window.host}:${window.port}`
 let picViewer  = null
 let inter = null
-const peerId = randStr(8).toLocaleLowerCase();
+const peerId = randStr(7).toLocaleLowerCase();
+let isConnected = false;
+let scrollTimer = null
+let currentClientIpForOut = ''//好难，startPeerConnection获取不到currentClientIp，只能在这里保存了
+// localStorage.setItem('peerId',peerId)
 let peer = new Peer(peerId,{
   key:'p',
   host: window.host,
   port: window.peerPort,
   path: window.peerPath,
+  debug: 3,
+  config:{
+    iceServers:[{
+      urls:'stun:stun.cloudflare.com'
+    }],
+    sdpSemantics: "unified-plan",
+  }
 })
 peer.on('open',function(id){
   console.warn('my peerId',id)
+})
+peer.on('error', function(err){
+  console.error(err)
 })
 
 function App() {
@@ -51,6 +65,7 @@ function App() {
   const [serverInfo, setServerInfo] = useState({ myIpAddr:window.host, port:window.port, clientIp:'' });
   const currentClient = useMemo(() => {
     // 耗时计算
+    currentClientIpForOut = currentClientIp
     document.querySelectorAll(`.msg-cell`).forEach((el) => {
       if(!el.classList.contains(`msg-${currentClientIp}`)){
         el.classList.add('hidden')
@@ -59,19 +74,19 @@ function App() {
       }
     })
     currentClientIp?clientsInfo[currentClientIp].msgCnt = 0:'';
-    return clients.find(client => client.ip === currentClientIp);
+    return clients.find(client => client.ip === currentClientIp)||{};
   }, [currentClientIp,clients]);
   const loopFetchHostClip = () => {
     axios.get(baseUrl+'/clipboard').then(res=>{
       setHostClip(res.data);
     })
     axios.post(baseUrl+'/clients').then(res=>{
-      setClients(res.data.data);
       res.data.data.forEach(client=>{
         if(!clientsInfo[client.ip]){
           clientsInfo[client.ip] = {msgCnt:0}
         }
       })
+      setClients(res.data.data);
     })
   }
   const startLoopFetch = () => {
@@ -87,19 +102,30 @@ function App() {
       toast.warning('Please input message');
       return
     }
-    const conn = peer.connect(currentClient.peerId);
-    conn.on('open',()=>{
-      console.warn('Connect open',currentClientIp)
+   
+    const connection = peer.connect(currentClient.peerId,{
+      reliable:true
+    });
+    connection.on('open',()=>{
+      console.warn('Connect open ',currentClientIp);
       const sendData = {msg,ip:serverInfo.clientIp,type:"html",id:`${peerId}_${Date.now()}`,time:dayjs().format('HH:mm:ss'),peerId, to:currentClientIp};
       renderMessage(sendData,1);
-      conn.send(sendData);
+      connection.send(sendData);
     })
-    conn.on('error', (err) => {
+    connection.on('error', (err) => {
       console.error('Error connecting peer:', err);
     });
   }
+  const scrollToBottom = () => {
+    console.log('Scroll to bottom')
+   
+    document.querySelector('html').scrollTop = document.querySelector('#content-main').scrollHeight;
+   
+  }
   const renderMessage = (data,type = 0) => {// type,0:接收的信息，1：我发的
     //至于为啥不用react的state保存，因为要渲染的内容可能有base64，内容比较大，怕内存开销大
+    clearTimeout(scrollTimer);
+    let shouldScroll = true;
     if(data.type==='html'){
       const targetEl = document.getElementById(`client-message`);
       const newEl = document.createElement('div');
@@ -111,11 +137,12 @@ function App() {
         if(!Reflect.has(clientsInfo,data.ip)){
           clientsInfo[data.ip] = { msgCnt:0 }
         }
-        if(data.ip === currentClientIp){
+        if(data.ip === currentClientIpForOut){
           clientsInfo[data.ip].msgCnt = 0;
         }else{
           newEl.classList.add('hidden')
           clientsInfo[data.ip].msgCnt++
+          shouldScroll = false;
         }
         // setClientsInfo(clientsInfo);
         newEl.classList.add('client-message-recieve','msg-cell',`msg-${data.ip}`);
@@ -126,6 +153,11 @@ function App() {
       newEl.appendChild(timeEl);
       newEl.appendChild(msgEl);
       targetEl.appendChild(newEl);
+      if(shouldScroll){
+        let scrollTimer = setTimeout(() =>{
+          scrollToBottom();
+        },1000)
+      }
       picViewer && picViewer.destroy();
       picViewer = new Viewer(document.querySelector('#client-message'), {
         inline: false,
@@ -133,6 +165,10 @@ function App() {
     }
   }
   const startPeerConnection = ()=>{
+    if(isConnected){
+      return;
+    }
+    isConnected = true;
     peer.on('connection',(conn)=>{
       conn.on('data', (data) => {
         // 收到数据
@@ -141,7 +177,7 @@ function App() {
       });
     })
   }
-  useEffect(()=>{
+  const init = ()=>{
     axios.post(baseUrl+'/info',{peerId,ua: navigator.userAgent},{
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -152,14 +188,19 @@ function App() {
     clearInterval(inter);
     startLoopFetch();
     startPeerConnection();
+  }
+  useEffect(()=>{
+    init();
     return ()=>{
       clearInterval(inter);
+      peer.destroy();
     }
   },[])
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <SidebarProvider className="w-full">
         <AppSidebar onSelectedHost={()=>setCurrentClientIp('')}  serverInfo={serverInfo} currentClientIp={currentClientIp}>
+         
           {clients.map((client)=>{
               return <Client 
                 onSelected={(ip)=>setCurrentClientIp(ip)} 
@@ -173,18 +214,24 @@ function App() {
                 key={client.ip}/>
             })
           }
+          
         </AppSidebar>
-        <main className="h-[100svh] relative w-full flex-1 flex-col justify-between flex">
+        <main id="content-main" className="min-h-[100svh] relative w-full flex-1 flex-col justify-between flex">
           <header className="flex bg-[var(--header-bg)] z-10 sticky top-0 left-0 items-center">
             {isMobile&&<SidebarTrigger />}
             <div className="flex-1 flex flex-col">
               <h2 className="text-sm flex items-center justify-center p-3 text-center font-bold">
-                {currentClient&&
-                  <Avatar className="mr-2" style={{ backgroundColor: currentClient.status==="online"?"#7e77e2":"gray" }}>
-                    <DeviceIcon ua={currentClient.ua}/>
-                  </Avatar>
+                {currentClient?<>
+                    <Avatar className="mr-2" style={{ backgroundColor: currentClient.status==="online"?"#7e77e2":"gray" }}>
+                      <DeviceIcon ua={currentClient.ua}/>
+                    </Avatar>
+                    <div>
+                      <p className="text-xs font-normal text-[#777]">{currentClient.peerId}</p>
+                      <p>{currentClient.ip}</p>
+                    </div>
+                  </>:<>ShareClip - A simple clipboard or file sharing tool</>
                 }
-                {currentClientIp ||' ShareClip - A simple clipboard or file sharing tool'}
+          
               </h2>
             </div>
           </header>

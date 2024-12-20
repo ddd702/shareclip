@@ -48,7 +48,7 @@ export default function AppSidebar({serverInfo,onSelectedHost,currentClientIp,ch
         {!isMobile&&<SidebarTrigger />}
       </SidebarHeader>
       <SidebarContent className="p-1">
-        <SidebarGroupLabel>Server</SidebarGroupLabel>
+        {open&&<SidebarGroupLabel>Server</SidebarGroupLabel>}
         <SidebarMenu>
           <SidebarMenuItem onClick={onSelectedHost} className={`${!currentClientIp?"selected":""} p-1 client-item flex text-sm cursor-pointer items-center`}>
             <Avatar className="bg-[var(--dialog-bg)] mr-1">
@@ -57,8 +57,10 @@ export default function AppSidebar({serverInfo,onSelectedHost,currentClientIp,ch
             {open&&<span>{serverInfo.myIpAddr}:{serverInfo.port}</span>}
           </SidebarMenuItem>
         </SidebarMenu>
-        <SidebarGroupLabel>Clients</SidebarGroupLabel>
-        {children}
+        {open&&<SidebarGroupLabel>Clients</SidebarGroupLabel>}
+        <SidebarMenu>
+          {children}
+        </SidebarMenu>
 
       </SidebarContent>
       <SidebarFooter >
