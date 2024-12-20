@@ -74,7 +74,7 @@ function App() {
       }
     })
     currentClientIp?clientsInfo[currentClientIp].msgCnt = 0:'';
-    return clients.find(client => client.ip === currentClientIp)||{};
+    return clients.find(client => client.ip === currentClientIp)||null;
   }, [currentClientIp,clients]);
   const loopFetchHostClip = () => {
     axios.get(baseUrl+'/clipboard').then(res=>{
